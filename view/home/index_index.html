@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>你是个傻吊</title>
+	<link rel="stylesheet" type="text/css" href="/static/css/index.css">
+	<script src="/static/react/react.min.js"></script>
+  	<script src="/static/react/react-dom.min.js"></script>
+  	<script src="/static/react/browser.min.js"></script> 
+	<script src='/static/js/main.js'></script>
+	<script src='/static/js/jquery-1.12.1.min.js'></script>
+</head>
+<body>
+	<script>
+		var inf = {
+			Uid: <%=controller.Uid%>,
+			Cid: null,
+			Color: null,
+			Action: null,
+			specifications: '10X10'
+		};
+	</script>
+	<script type="text/babel">
+		var Character = React.createClass({
+			componentDidMount : function () {
+				
+			},
+			render : function () {
+				return (
+					<div 
+						style={{
+							top: '100px',
+							left: 0,
+							position: 'absolute',				
+							width: '20px',
+							height: '20px',
+							borderRadius: '100%',
+							background: '#000'
+						}}
+					>
+					</div>
+				)
+			}
+		});
+		var NameInput = React.createClass({
+			componentDidMount : function () {
+				if (this.props.z == 1) {
+					this.refs.input.value = this.props.value;
+					var self = this;
+					var timer = setInterval(function () {
+						$.get('/user/senduname',{Uname:self.refs.input.value,Uid:<%=controller.Uid%>},function (res) {
+						});
+					},1000);
+				}
+			},
+			render : function () {
+				return (
+					<input 
+						ref='input'
+						type='text'
+						style={{
+							width: '200px',
+							height: '30px',
+							border: '2px solid rgb(173,138,114)',
+							position: 'absolute',
+							left: '50%',
+							textAlign: 'center',
+							top: this.props.top,
+							marginLeft: '-100px',
+							background: 'rgb(215,188,156)',
+							lineHeight: '30px',
+							fontWeight: 'bold',
+							zIndex: this.props.z
+						}}/>
+				)
+			}
+		});
+		var Box = React.createClass({
+			render : function () {
+
+			}
+		});
+		var PeopleDetailList = React.createClass({
+			getInitialState: function() {
+			    return {
+			    	mouseIn: false
+			    };
+			},
+			handleMouseOver: function () {
+				this.setState({mouseIn: true});
+			},	
+			handleMouseOut: function () {
+				this.setState({mouseIn: false})
+			},
+			handleClick: function (e) {
+				e.preventDefault();
+				var Uid = <%=controller.Uid%>;
+				var oUid = this.props.item.Uid;
+				$.get('/home/user/capming',{Uid: Uid, oUid: oUid},function (res) {
+					var b = JSON.parse(res);
+					if (b.succ) {
+						inf.Cid = b.cid;
+						alert('连接成功');
+					} else {
+						alert('连接失败');
+					}
+				});
+			},
+			render : function () {			
+				var color = this.state.mouseIn?'#fff':'#333',
+					display = this.state.mouseIn?'block':'none';
+				return (
+					<li style={{
+						textAlign: 'center',
+						borderBottom: '2px solid rgb(173,138,114)',
+						position: 'relative'
+					}}>
+						<a style={{
+							display: 'block',
+							color: color,
+							lineHeight: '30px',
+							fontWeight: 'bold',
+							fontSize: '14px',
+							height: '30px',
+							fontWeight: 'bold'
+						}} href="" ref='link' 
+						onClick={this.handleClick}
+						onMouseOver={this.handleMouseOver}
+						onMouseOut={this.handleMouseOut}
+						 >{this.props.item.Uname}</a>
+						<span style={{
+							position: 'absolute',
+							top: 0,
+							left: '104px',
+							lineHeight: '30px',
+							color: 'red',
+							display: display
+						}}>
+							Go!
+						</span>
+					</li>
+				)
+			}
+		});
+		var PersonList = React.createClass({
+			componentDidMount: function () {
+				var list = this.refs.list;
+				var self = this;
+				var timer = setInterval(function () {
+					$.get('/home/user/getuser',{Uid: <%=controller.Uid%>},function (res) {
+						var data = JSON.parse(res);
+						self.setState({
+							data: data
+						})
+					});
+				},1000);
+			},
+			getInitialState: function() {
+			    return {
+			    	data: []
+			    };
+			},
+			render : function () {
+				var data = this.state.data,
+					self = this;
+				return (
+					<ul ref='list' style={{
+						position: 'fixed',
+						top: (window.innerHeight - 300)/2 + 'px',
+						left: '0px',
+						width: '100px',
+						height: '300px',
+						border: '2px solid rgb(173,138,114)',
+						borderTopRightRadius: '6px',
+						borderBottomRightRadius: '6px',
+						background: 'rgb(215,188,156)',
+						zIndex: 1,
+					}}>
+						{
+							data.map(function (item) {
+								return (
+									<PeopleDetailList item={item}/>
+								)
+							})
+						}
+					</ul>
+				)
+			}
+		})
+		var Container = React.createClass({
+			componentDidMount : function () {
+				this.refs.container.style.height = window.innerHeight + 'px';
+			},
+			render : function () {
+				return (
+					<div className='outer'>
+						<PersonList/>
+						<NameInput top='20px' z='0'/>
+						<NameInput value='<%=controller.Uname%>' top={window.innerHeight - 50} z='1'/>
+						<div ref='container' className='container'
+							style={{
+								width: '100%',
+								overflow: 'hidden',
+								position: 'relative',
+							}}
+						>
+							<RealContainer/>
+						</div>
+					</div>
+				)
+			}
+		});
+		var RealContainer = React.createClass({
+			specifications : inf.specifications,
+			render : function () {
+				var arr = [];
+				var str1 = this.specifications.split('X')[0];
+				var str2 = this.specifications.split('X')[1];
+				for (var i = 0;i < str1 * str2;i++) {
+					arr.push(1);
+				}
+				return (
+					<div className='real-container' style={{
+						margin: '0 auto',
+						marginTop : (window.innerHeight - str2 * 32)/2 + 'px',
+						border: '1px solid rgb(173,138,114)',
+						width: str1 * 32 + 'px',
+						height: str2 * 32 + 'px',
+						transform: 'rotateX(30deg)'
+					}}>
+						{
+							arr.map(function (item,index) {		
+								if (index % str1 == 0 && index > 0) {
+									return <Mesh x={index % 10} y={Math.floor(index/10)} p='clear'/>
+								} else {
+									return <Mesh x={index % 10} y={Math.floor(index/10)}/>
+								}
+							})
+						}
+					</div>
+				)
+			}
+		});
+		var Chess = React.createClass({
+			render : function () {
+				return (
+					<div style={{
+						width: '24px',
+						height: '24px',
+						background: this.props.co,
+						borderRadius: '100%',
+						margin: '3px 3px',
+						opacity: this.props.op
+					}}>
+					</div>
+				)
+			}
+		});
+		var Mesh = React.createClass({
+			css : function () {
+				var cssText = {
+					width: '30px',
+					height: '30px',
+					border: '1px solid rgb(173,138,114)',
+					float: 'left',
+					background: 'rgb(215,188,156)'
+				};
+				if (this.props.p == 'clear') {
+					cssText.clear = 'both';
+				}
+				return cssText;
+			},
+			componentDidMount : function () {
+
+			},
+			handleMouseOver : function () {
+				if (inf.Cid && inf.Action == 1 && this.refs.border.clicked != 'true') {
+					React.render(
+						<Chess 
+						op='0.5'
+						co={inf.Color}/>,
+						this.refs.border
+					);
+				}
+			},
+			handleMouseOut : function (e) {
+				if (!inf.Cid || inf.Action !=1) {
+					return;
+				}
+				if (this.refs.border.clicked != 'true' && (!e.relatedTarget || e.relatedTarget.parentNode != this.refs.border)) {
+					this.refs.border.removeChild(this.refs.border.firstElementChild);
+				}
+			},
+			handleClick : function (e) {
+				if (inf.Cid && inf.Action == 1) {
+					var target = e.currentTarget;
+					inf.Action = 0;
+					$.get('/home/game/setstate',{
+						Cid: inf.Cid,
+						Uid: inf.Uid,
+						x: this.props.x,
+						y: this.props.y
+					},
+						function (res) {
+							res = JSON.parse(res);
+							console.log(res);
+							if (res.res == 1) {
+								target.clicked = 'true';
+								target.firstElementChild.style.opacity = '1';
+								if (res.jud == 1) {
+									alert('你赢了');
+								}
+							}
+						});
+				}
+			},
+			render : function () {
+				return (
+					<div 
+					className='mesh'
+					ref='border' 
+					x={this.props.x}
+					y={this.props.y}
+					onMouseOver={this.handleMouseOver}
+					onMouseOut={this.handleMouseOut}
+					onClick={this.handleClick}
+					style={this.css()}
+					>
+					</div>
+				)
+			}
+		})
+		React.render(
+			<Container/>,
+			document.body
+		);
+		window.onload = function () {
+			var meshArr = fillMeshArr();
+			var getInf = setInterval(function () {
+				if (inf.Cid) {
+					$.get('/game/getcapminginf',{Cid: inf.Cid,Uid: inf.Uid},function (res) {
+						res = JSON.parse(res);
+						inf.Color = res.Color?'#fff':'#000';
+						inf.Action = res.Action;
+						inf.Carr = JSON.parse(res.Carr);
+						inf.Carr.forEach(function (item,aIndex) {
+							item.forEach(function (item,bIndex) {
+								if (item != 0) {
+									meshArr[aIndex][bIndex].clicked = 'true';
+									React.render(
+										<Chess 
+										op='1'
+										co={item > 1?'#fff':'#000'}/>,
+										meshArr[aIndex][bIndex]
+									);
+								}
+							})
+						});
+					});
+				}
+			},1000);
+			var getCid = setInterval(function () {
+				if (!inf.Cid) {
+					$.get('/game/getcapminginf',{Uid: inf.Uid},function (res) {
+						res = JSON.parse(res);
+						inf.Cid = res.Cid;
+						if (inf.Cid) {
+							alert('有个蛤蟆皮和你展开了战斗');
+							clearInterval(getCid);
+						}
+					});
+				}
+			},1000);
+
+			function fillMeshArr () {
+				var arr = document.querySelectorAll('.mesh');
+				var x = inf.specifications.split('X')[0];
+				var temp = [];
+				for (var i = 0;i < x;i++) {
+					temp.push([]);
+					for (var j = 0;j < x;j++) {
+						temp[i].push(arr[i*x+j]);
+					}
+				}
+				return temp;
+			}
+		}
+	</script>
+	<script type="text/babel">
+		
+	</script>
+</body>
+</html>
